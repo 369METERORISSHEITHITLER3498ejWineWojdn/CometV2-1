@@ -37,9 +37,10 @@ runcode(function()
                 clone.Parent = game:GetService("Workspace")
                 cam.CameraSubject = clone:FindFirstChild("Humanoid")
                 char.Parent = nil
+                lplr.Character = clone
                 clone:FindFirstChild("Animate").Disabled = true
-                task.wait()
                 clone:FindFirstChild("Animate").Disabled = false
+                clone:FindFirstChild("HumanoidRootPart").Anchored = false
             else
                 clone:Destroy()
                 char.Parent = game:GetService("Workspace")
