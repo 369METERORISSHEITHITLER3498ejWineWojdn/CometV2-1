@@ -1,3 +1,4 @@
+-- Skid --
 repeat task.wait() until game:IsLoaded()
 function betterisfile(path)
     local suc, res = pcall(function() readfile(path) end)
