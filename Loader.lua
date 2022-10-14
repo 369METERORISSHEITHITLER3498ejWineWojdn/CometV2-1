@@ -3,11 +3,12 @@ function betterisfile(path)
     local suc, res = pcall(function() readfile(path) end)
     return suc and res ~= nil
 end
+shared["betterisfile"] = betterisfile
 spawn(function()
     local queueteleport = syn and syn.queue_on_teleport or queue_on_teleport or fluxus and fluxus.queue_on_teleport
     game:GetService("Players").LocalPlayer.OnTeleport:Connect(function(State)
         if State == Enum.TeleportState.Started then
-            queueteleport('if betterisfile("CometV2/Loader.lua") then loadstring(readfile("CometV2/Loader.lua"))() else loadstring(game:HttpGet("https://raw.githubusercontent.com/Ham-135/CometV2/main/Loader.lua"))()')
+            queueteleport([[if betterisfile("CometV2/Loader.lua") then loadstring(readfile("CometV2/Loader.lua"))() else loadstring(game:HttpGet("https://raw.githubusercontent.com/Ham-135/CometV2/main/Loader.lua"))() end]])
         end
     end)
 end)
