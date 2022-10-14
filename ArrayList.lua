@@ -31,6 +31,7 @@ function ArrayList.Add(Name,Suffix)
     label.Text = newname
     label.TextColor3 = shared["CometConfigs"].Color
     label.TextStrokeTransparency = shared["CometConfigs"].StrokeTransparency
+    label.Name = Name
     label.Parent = Frame
     spawn(function()
         repeat
