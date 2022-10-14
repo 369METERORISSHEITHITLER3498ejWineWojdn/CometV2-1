@@ -1,5 +1,10 @@
 repeat task.wait() until game:IsLoaded()
-local array = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ham-135/CometV2/main/ArrayList.lua"))()
+local array
+if shared["betterisfile"]("CometV2/ArrayList.lua") then
+    array = loadstring(readfile("CometV2/ArrayList.lua"))()
+else
+    array = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ham-135/CometV2/main/ArrayList.lua"))()
+end
 local lib = {
     ["Rainbow"] = false,
     ["Notifications"] = false,
@@ -178,9 +183,11 @@ end
 function lib:ToggleLib()
     if not ScreenGui.Enabled and game:GetService("UserInputService"):GetFocusedTextBox() == nil then
         ScreenGui.Enabled = true
+        array.SetDrag(true)
     else
         if game:GetService("UserInputService"):GetFocusedTextBox() == nil then
             ScreenGui.Enabled = false
+            array.SetDrag(false)
         end
     end
 end
