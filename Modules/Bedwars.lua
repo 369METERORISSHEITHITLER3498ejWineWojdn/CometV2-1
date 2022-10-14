@@ -1,10 +1,4 @@
-repeat task.wait() until game:IsLoaded()
 task.wait(0.5)
-local BwGames = {6872274481,8444591321,8560631822}
-if not table.find(BwGames,game.PlaceId) then
-    warn("[CometV2] Game not Supported!")
-    return
-end
 shared["CometConfigs"] = {
     StrokeTransparency = 0.75,
     Color = Color3.fromRGB(255,65,65),
@@ -1334,6 +1328,20 @@ runcode(function()
             ShowAmount["Enabled"] = v
             if Enabled then
                 ui.Enabled = v
+            end
+        end
+    })
+end)
+
+runcode(function()
+    local Enabled = false
+    local DinoExploit = Tabs["Exploits"]:CreateToggle({
+        ["Name"] = "DinoExploit",
+        ["Callback"] = function(Callback)
+            Enabled = Callback
+            if Enabled then
+                lib["ToggleFuncs"]["DinoExploit"](true)
+                game:GetService("ReplicatedStorage"):FindFirstChild("events-@easy-games/game-core:shared/game-core-networking@getEvents.Events").useAbility:FireServer("dino_charge")
             end
         end
     })
