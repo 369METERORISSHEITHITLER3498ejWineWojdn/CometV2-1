@@ -1,53 +1,56 @@
-local array = Instance.new("ScreenGui", game:GetService("CoreGui"))
-local arrayFrame = Instance.new("Frame", array)
-arrayFrame.Size = UDim2.new(0.13, 0, 1, 0)
-arrayFrame.Position = UDim2.new(0.87, 0, 0, 0)
-arrayFrame.BackgroundTransparency = 1
-local Grid = Instance.new("UIGridLayout",arrayFrame)
-Grid.CellPadding = UDim2.new(0, 0, 0.0001, 0)
-Grid.SortOrder = Enum.SortOrder.LayoutOrder
-Grid.CellSize = UDim2.new(1, 0, 0.0275, 0)
-Grid.HorizontalAlignment = "Left"
+local ArrayList = {}
+local ArrayGui = Instance.new("ScreenGui",game:GetService("CoreGui"))
+local Frame = Instance.new("Frame",ArrayGui)
+local Layout = Instance.new("UIListLayout",Frame)
+ArrayGui.Enabled = shared["CometConfigs"].Enabled
+ArrayGui.ResetOnSpawn = false
+Frame.Size = UDim2.new(0.2,0,1,0)
+Frame.Position = UDim2.new(0.87,0,0,0)
+Frame.BackgroundTransparency = 1
+Frame.BorderSizePixel = 0
 
-task.spawn(function()
-    while task.wait(1) do
-        array.Enabled = shared["CometConfigs"].Enabled
-     end
+spawn(function()
+    repeat
+        task.wait(1)
+        ArrayGui.Enabled = shared["CometConfigs"].Enabled
+    until not ArrayGui
 end)
 
-Arraylist = {
-    Add = function(Name,Suffix)
-        local Text = Instance.new("TextLabel",arrayFrame)
-        local newName
-        if Suffix then
-			newName = Name.." | "..Suffix
-        else
-            newName = Name
-        end
-        Text.Name = Name
-        Text.BackgroundTransparency = 1
-        Text.Size = UDim2.new(0,0,1,0)
-        Text.Font = Enum.Font.Gotham
-        local TextScale = Text.AbsoluteSize.Y * 0.7
-        Text.TextSize = TextScale
-        Text.Text = newName.." "
-        local size = game:GetService("TextService"):GetTextSize(newName, TextScale, Enum.Font.Gotham, Vector2.new(1000000, 1000000))
-        Text.TextXAlignment = "Right"
-        Text.LayoutOrder = -size.X
-        task.spawn(function()
-            repeat
-                task.wait()
-                Text.TextStrokeTransparency = shared["CometConfigs"].StrokeTransparency
-                Text.TextColor3 = shared["CometConfigs"].Color
-            until not Text
-        end)
-    end,
-    Remove = function(Name)
-        if arrayFrame:FindFirstChild(Name) then
-            arrayFrame:FindFirstChild(Name):Destroy()
-        end
-    end,
-}
+function ArrayList.Add(Name,Suffix)
+    local newname
+    if Suffix then
+        newname = Name.." <font color='rgb(75,75,75)'>"..Suffix.."</font>"
+    else
+        newname = Name
+    end
+    local label = Instance.new("TextLabel")
+    label.TextScaled = true
+    label.RichText = true
+    label.Size = UDim2.new(0,217,0,30)
+    label.BackgroundTransparency = 1
+    label.Text = newname
+    label.TextColor3 = shared["CometConfigs"].Color
+    label.TextStrokeTransparency = shared["CometConfigs"].StrokeTransparency
+    label.Parent = Frame
+    spawn(function()
+        repeat
+            task.wait()
+            label.TextStrokeTransparency = shared["CometConfigs"].StrokeTransparency
+            label.TextColor3 = shared["CometConfigs"].Color
+        until not label
+    end)
+end
 
+function ArrayList.Remove(Name)
+    if Frame:FindFirstChild(Name) then
+        Frame:FindFirstChild(Name):Destroy()
+    end
+end
 
-return Arraylist
+function ArrayList.SetDrag(value)
+    Frame.Draggable = value
+    Frame.Selectable = value
+    Frame.Active = value
+end
+
+return ArrayList
