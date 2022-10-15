@@ -841,7 +841,6 @@ runcode(function()
             Enabled = Callback
             if Enabled then
                 spawn(function()
-                    ui.Enabled = true
                     repeat task.wait() until GetMatchState() ~= 0
                     if not Enabled then return end
                     while task.wait(Tick["Value"]) do
@@ -889,8 +888,6 @@ runcode(function()
                         end
                     end
                 end)
-            else
-                ui.Enabled = false
             end
         end
     })
