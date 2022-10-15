@@ -183,11 +183,9 @@ end
 function lib:ToggleLib()
     if not ScreenGui.Enabled and game:GetService("UserInputService"):GetFocusedTextBox() == nil then
         ScreenGui.Enabled = true
-        array.SetDrag(true)
     else
         if game:GetService("UserInputService"):GetFocusedTextBox() == nil then
             ScreenGui.Enabled = false
-            array.SetDrag(false)
         end
     end
 end
