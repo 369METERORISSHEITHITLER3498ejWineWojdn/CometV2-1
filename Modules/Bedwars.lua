@@ -4,7 +4,12 @@ shared["CometConfigs"] = {
     Color = Color3.fromRGB(255,65,65),
     Enabled = false
 }
-local lib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ham-135/CometV2/main/GuiLibrary.lua"))()
+local lib
+if shared["betterisfile"]("CometV2/GuiLibrary") then
+    lib = loadstring(readfile("CometV2/GuiLibrary.lua"))()
+else
+    lib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ham-135/CometV2/main/GuiLibrary.lua"))()
+end
 local getasset = getsynasset or getcustomasset
 local ScreenGuitwo = game:GetService("CoreGui").RektskyNotificationGui
 local lplr = game:GetService("Players").LocalPlayer
@@ -33,22 +38,24 @@ function getremote(tab)
     return ""
 end
 local bedwars = {
-	["PaintRemote"] = getremote(debug.getconstants(KnitClient.Controllers.PaintShotgunController.fire)),
 	["KnockbackTable"] = debug.getupvalue(require(game:GetService("ReplicatedStorage").TS.damage["knockback-util"]).KnockbackUtil.calculateKnockbackVelocity, 1),
 	["CombatConstant"] = require(game:GetService("ReplicatedStorage").TS.combat["combat-constant"]).CombatConstant,
 	["SprintController"] = KnitClient.Controllers.SprintController,
 	["ResetRemote"] = getremote(debug.getconstants(debug.getproto(KnitClient.Controllers.ResetController.createBindable, 1))),
-	["PickupRemote"] = getremote(debug.getconstants((require(lplr.PlayerScripts.TS.controllers.global["item-drop"]["item-drop-controller"]).ItemDropController).checkForPickup)),
 	["ShopItems"] = debug.getupvalue(require(game:GetService("ReplicatedStorage").TS.games.bedwars.shop["bedwars-shop"]).BedwarsShop.getShopItem, 2),
 	["DamageController"] = require(lplr.PlayerScripts.TS.controllers.global.damage["damage-controller"]).DamageController,
 	["DamageTypes"] = require(game:GetService("ReplicatedStorage").TS.damage["damage-type"]).DamageType,
     ["SwordRemote"] = getremote(debug.getconstants((KnitClient.Controllers.SwordController).attackEntity)),
     ["PingController"] = require(lplr.PlayerScripts.TS.controllers.game.ping["ping-controller"]).PingController,
     ["DamageIndicator"] = KnitClient.Controllers.DamageIndicatorController.spawnDamageIndicator,
-    ["DaoController"] = KnitClient.Controllers.DaoController,
-    ["ClientHandlerStore"] = require(lplr.PlayerScripts.TS.ui.store).ClientStore
+    ["ClientHandlerStore"] = require(lplr.PlayerScripts.TS.ui.store).ClientStore,
+    ["SwordController"] = KnitClient.Controllers.SwordController,
 }
-function CreateNotification(title,text,delay2)
+function getQueueType()
+    local state = bedwars["ClientHandlerStore"]:getState()
+    return state.Game.queueType or "bedwars_test"
+end
+function CreateNotification(title, text, delay2)
     spawn(function()
         if ScreenGuitwo:FindFirstChild("Background") then ScreenGuitwo:FindFirstChild("Background"):Destroy() end
         local frame = Instance.new("Frame")
@@ -797,20 +804,34 @@ runcode(function()
     local Anims = {
         ["Slow"] = {
             {CFrame = CFrame.new(0, 0, 0) * CFrame.Angles(math.rad(220), math.rad(100), math.rad(100)),Time = 0.25},
-            {CFrame = CFrame.new(0, 0, 0) * CFrame.Angles(math.rad(0), math.rad(0), math.rad(0)),Time = 0.25},
+            {CFrame = CFrame.new(0, 0, 0) * CFrame.Angles(math.rad(0), math.rad(0), math.rad(0)), Time = 0.25}
         },
         ["Weird"] = {
             {CFrame = CFrame.new(0, 0, 1.5) * CFrame.Angles(math.rad(0), math.rad(0), math.rad(0)),Time = 0.25},
             {CFrame = CFrame.new(0, 0, -1.5) * CFrame.Angles(math.rad(0), math.rad(0), math.rad(0)),Time = 0.25},
-            {CFrame = CFrame.new(0, 0, 0) * CFrame.Angles(math.rad(0), math.rad(0), math.rad(0)),Time = 0.25},
+            {CFrame = CFrame.new(0, 0, 0) * CFrame.Angles(math.rad(0), math.rad(0), math.rad(0)), Time = 0.25}
         },
+        ["Self"] = {
+            {CFrame = CFrame.new(0, 0, 0) * CFrame.Angles(math.rad(-90), math.rad(90), math.rad(90)),Time = 0.25},
+            {CFrame = CFrame.new(0, 0, 0) * CFrame.Angles(math.rad(0), math.rad(0), math.rad(0)), Time = 0.25}
+        },
+        ["Butcher"] = {
+            {CFrame = CFrame.new(0, -1, 0) * CFrame.Angles(math.rad(0), math.rad(90), math.rad(0)),Time = 0.3},
+            {CFrame = CFrame.new(0, 0, 0) * CFrame.Angles(math.rad(0), math.rad(0), math.rad(0)), Time = 0.3}
+        },
+        ["VerticalSpin"] = {
+			{CFrame = CFrame.new(0, 0, 0) * CFrame.Angles(math.rad(-90), math.rad(8), math.rad(5)), Time = 0.3},
+			{CFrame = CFrame.new(0, 0, 0) * CFrame.Angles(math.rad(180), math.rad(3), math.rad(13)), Time = 0.3},
+			{CFrame = CFrame.new(0, 0, 0) * CFrame.Angles(math.rad(90), math.rad(-5), math.rad(8)), Time = 0.3},
+			{CFrame = CFrame.new(0, 0, 0) * CFrame.Angles(math.rad(0), math.rad(0), math.rad(0)), Time = 0.3}
+		}
     }
     local VMAnim = false
     local HitRemote = Client:Get(bedwars["SwordRemote"])
     local origC0 = game:GetService("ReplicatedStorage").Assets.Viewmodel.RightHand.RightWrist.C0
-    local DistVal = {["Value"] = 25}
+    local DistVal = {["Value"] = 21}
+    local Tick = {["Value"] = 0.03}
     local AttackAnim = {["Enabled"] = true}
-    local UseMultiAura = {["Enabled"] = true}
     local CurrentAnim = {["Value"] = "Slow"}
     local Enabled = false
     local KillAura = Tabs["Blatant"]:CreateToggle({
@@ -819,16 +840,13 @@ runcode(function()
             Enabled = Callback
             if Enabled then
                 spawn(function()
-                    local constants = require(game:GetService("ReplicatedStorage").TS.games.bedwars.items["paint-shotgun"]["paint-shotgun-constants"]).PaintShotgunConstants
-                    constants.COOLDOWN = 0.001
-                end)
-                spawn(function()
+                    ui.Enabled = true
                     repeat task.wait() until GetMatchState() ~= 0
                     if not Enabled then return end
-                    while task.wait(0.1) do
+                    while task.wait(Tick["Value"]) do
                         if not Enabled then return end
                         for i,v in pairs(game:GetService("Players"):GetChildren()) do
-                            if v.Team ~= lplr.Team and IsAlive(v) and not v.Character:FindFirstChildOfClass("ForceField") then
+                            if v.Team ~= lplr.Team and IsAlive(v) and IsAlive(lplr) and not v.Character:FindFirstChildOfClass("ForceField") then
                                 local mag = (v.Character:FindFirstChild("HumanoidRootPart").Position - lplr.Character:FindFirstChild("HumanoidRootPart").Position).Magnitude
                                 if mag < DistVal["Value"] then
                                     local sword = getSword()
@@ -849,7 +867,9 @@ runcode(function()
                                         end
                                     end)
                                     if sword ~= nil then
+                                        bedwars["SwordController"].lastAttack = game:GetService("Workspace"):GetServerTimeNow() - 0.11
                                         HitRemote:SendToServer({
+                                            --["bye"] = "lex",
                                             ["weapon"] = sword.tool,
                                             ["entityInstance"] = v.Character,
                                             ["validate"] = {
@@ -863,16 +883,13 @@ runcode(function()
                                             ["chargedAttack"] = {["chargeRatio"] = 1},
                                         })
                                     end
-                                    if UseMultiAura["Enabled"] then
-                                        local selfpos = lplr.Character and lplr.Character.PrimaryPart and lplr.Character.PrimaryPart.Position or v:FindFirstChild("HumanoidRootPart").Position
-                                        local newpos = v.Character:FindFirstChild("HumanoidRootPart").Position
-                                        Client:Get(bedwars["PaintRemote"]):SendToServer(selfpos, CFrame.lookAt(selfpos, newpos).LookVector)
-                                    end
                                 end
                             end
                         end
                     end
                 end)
+            else
+                ui.Enabled = false
             end
         end
     })
@@ -884,26 +901,26 @@ runcode(function()
         ["Default"] = 21,
         ["Round"] = 1
     })
+    Tick = KillAura:CreateSlider({
+        ["Name"] = "Tick",
+        ["Function"] = function() end,
+        ["Min"] = 0,
+        ["Max"] = 1,
+        ["Default"] = 0.03
+    })
     CurrentAnim = KillAura:CreateDropDown({
         ["Name"] = "VMAnimation",
         ["Function"] = function(v) 
             CurrentAnim["Value"] = v
         end,
-        ["List"] = {"Slow","Weird"},
-        ["Default"] = "Slow"
+        ["List"] = {"Slow","Weird","Self","Butcher","VerticalSpin"},
+        ["Default"] = "Butcher"
     })
     AttackAnim = KillAura:CreateOptionTog({
         ["Name"] = "Animation",
         ["Default"] = true,
         ["Func"] = function(v)
             AttackAnim["Enabled"] = v
-        end
-    })
-    UseMultiAura = KillAura:CreateOptionTog({
-        ["Name"] = "MultiAura",
-        ["Default"] = true,
-        ["Func"] = function(v)
-            UseMultiAura["Enabled"] = v
         end
     })
 end)
@@ -922,7 +939,7 @@ runcode(function()
                         local Detected = {}
                         for i,v in pairs(game:GetService("Players"):GetChildren()) do
                             spawn(function()
-                                if IsAlive(v) then
+                                if IsAlive(v) and v.Name ~= lplr.Name then
                                     local yover = false
                                     local hrp = v.Character:FindFirstChild("HumanoidRootPart")
                                     local oldpos
@@ -937,7 +954,7 @@ runcode(function()
                                     if mag > 25 and yover == false then
                                         CreateNotification("HackerDetector",v.Name.." has been flagged\nFor: Speed ("..math.floor(mag)..")",5)
                                     end
-                                elseif IsAlive(v) == false and CanWalk(v) == true then
+                                elseif IsAlive(v) == false and CanWalk(v) == true and v.Name ~= lplr.Name then
                                     CreateNotification("HackerDetector",v.Name.." has been flagged\nFor: DeathDisabler",5)
                                 end
                             end)
@@ -1222,7 +1239,7 @@ runcode(function()
                         spawn(function()
                             pcall(function()
                                 obj.Parent.Text = Messages[math.random(1,#Messages)]
-                                obj.Parent.TextColor3 =  Color3.fromHSV(tick()%5/5,1,1)
+                                obj.Parent.TextColor3 = Color3.fromHSV(tick()%5/5,1,1)
                             end)
                         end)
                         return game:GetService("TweenService"):Create(obj,...)
@@ -1334,24 +1351,86 @@ runcode(function()
 end)
 
 runcode(function()
+    local old
     local Enabled = false
-    local DinoExploit = Tabs["Exploits"]:CreateToggle({
-        ["Name"] = "DinoExploit",
+    local HypixelJump = Tabs["Combat"]:CreateToggle({
+        ["Name"] = "NoClickDelay",
         ["Callback"] = function(Callback)
             Enabled = Callback
             if Enabled then
-                lib["ToggleFuncs"]["DinoExploit"](true)
-                game:GetService("ReplicatedStorage"):FindFirstChild("events-@easy-games/game-core:shared/game-core-networking@getEvents.Events").useAbility:FireServer("dino_charge")
+                old = bedwars["SwordController"].isClickingTooFast
+                bedwars["SwordController"].isClickingTooFast = function(self)
+                    self.lastSwing = tick()
+                    return false
+                end
+                debug.setconstant(bedwars["SwordController"].attackEntity,23,0.64)
+            else
+				bedwars["SwordController"].isClickingTooFast = old
+				debug.setconstant(bedwars["SwordController"].attackEntity,23,0.8)
             end
         end
     })
 end)
 
-task.delay(0.5, function()
-    CreateNotification("Comet V2","Comet V2 Loaded! Hope you enjoy! discord.gg/fJNbvucPS5",15)
-    game:GetService("StarterGui"):SetCore("ChatMakeSystemMessage",{
-        Text = "Comet V2 Loaded!\nMade by Ham135 and Car (Also on YT)!\ndiscord.gg/fJNbvucPS5",
-        Color = Color3.fromRGB(255,65,65),
-        Font = Enum.Font.SourceSansBold
+runcode(function()
+    local ambience
+    local Enabled = false
+    local RainbowSky = Tabs["Render"]:CreateToggle({
+        ["Name"] = "RainbowSky",
+        ["Callback"] = function(Callback)
+            Enabled = Callback
+            if Enabled then
+                ambience = Instance.new("Atmosphere",game:GetService("Lighting"))
+                ambience.Density = 0
+                ambience.Offset = 0
+                ambience.Glare = 0.25
+                ambience.Haze = 10
+                spawn(function()
+                    while task.wait() do
+                        if not Enabled then return end
+                        ambience.Color = Color3.fromHSV(tick()%5/5,1,1)
+                        ambience.Decay = Color3.fromHSV(tick()%5/5,1,1)
+                    end
+                end)
+            else
+                ambience:Destroy()
+            end
+        end
+    })
+end)
+
+runcode(function()
+    local Enabled = false
+    local AutoPlayAgain = Tabs["Utility"]:CreateToggle({
+        ["Name"] = "AutoPlayAgain",
+        ["Callback"] = function(Callback)
+            Enabled = Callback
+            if Enabled then
+                spawn(function()
+                    repeat task.wait(3) until GetMatchState() == 2 or not Enabled
+                    if not Enabled then return end
+                    game:GetService("ReplicatedStorage"):FindFirstChild("events-@easy-games/lobby:shared/event/lobby-events@getEvents.Events").joinQueue:FireServer({["queueType"] = getQueueType()})
+                    return
+                end)
+            end
+        end
+    })
+end)
+
+runcode(function()
+    local Enabled = false
+    local Range = {["Value"] = 100}
+    local VomitEffect = Tabs["Render"]:CreateToggle({
+        ["Name"] = "VomitEffect",
+        ["Callback"] = function(Callback)
+            Enabled = Callback
+            if Enabled then
+                lib["ToggleFuncs"]["VomitEffect"](true)
+                Client:Get("gwcMycNueYtlz"):SendToServer({
+                    player = lplr,
+                    targetPoint = (lplr.Character:FindFirstChild("HumanoidRootPart").CFrame + lplr.Character:FindFirstChild("HumanoidRootPart").CFrame.LookVector).Position
+                })
+            end
+        end
     })
 end)
