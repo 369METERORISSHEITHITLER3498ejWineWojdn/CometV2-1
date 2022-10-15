@@ -26,10 +26,10 @@ function ArrayList.Add(Name,Suffix)
     local label = Instance.new("TextLabel")
     label.TextScaled = true
     label.RichText = true
-    label.Size = UDim2.new(0,217,0,30)
+    label.Size = UDim2.new(0,217,0,25)
     label.BackgroundTransparency = 1
     label.Text = newname
-    label.TextColor3 = shared["CometConfigs"].Color
+    label.TextColor3 = Color3.fromHSV(tick()%5/5,1,1)
     label.TextStrokeTransparency = shared["CometConfigs"].StrokeTransparency
     label.Name = Name
     label.Parent = Frame
@@ -37,7 +37,7 @@ function ArrayList.Add(Name,Suffix)
         repeat
             task.wait()
             label.TextStrokeTransparency = shared["CometConfigs"].StrokeTransparency
-            label.TextColor3 = shared["CometConfigs"].Color
+            label.TextColor3 = Color3.fromHSV(tick()%5/5,1,1)
         until not label
     end)
 end
