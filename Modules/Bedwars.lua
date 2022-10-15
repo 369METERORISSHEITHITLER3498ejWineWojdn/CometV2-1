@@ -2,6 +2,7 @@ task.wait(0.5)
 shared["CometConfigs"] = {
     StrokeTransparency = 0.75,
     Color = Color3.fromRGB(255,65,65),
+    Watermark = true,
     Enabled = false
 }
 local lib
@@ -1017,14 +1018,26 @@ end)
 
 runcode(function()
     local Enabled = false
+    local Watermark = {["Enabled"] = true}
     local ArrayList = Tabs["Render"]:CreateToggle({
         ["Name"] = "ArrayList",
         ["Callback"] = function(Callback)
             Enabled = Callback
             if Enabled then
                 shared["CometConfigs"].Enabled = true
+                shared["CometConfigs"].Watermark = Watermark["Enabled"]
             else
                 shared["CometConfigs"].Enabled = false
+            end
+        end
+    })
+    Watermark = ArrayList:CreateOptionTog({
+        ["Name"] = "Watermark",
+        ["Default"] = true,
+        ["Func"] = function(v)
+            Watermark["Enabled"] = v
+            if Enabled then
+                shared["CometConfigs"].Watermark = v
             end
         end
     })
@@ -1432,5 +1445,38 @@ runcode(function()
                 })
             end
         end
+    })
+end)
+
+runcode(function()
+    local Enabled = false
+    local NewGravity = {["Value"] = 0}
+    local Gravity = Tabs["Blatant"]:CreateToggle({
+        ["Name"] = "Gravity",
+        ["Callback"] = function(Callback)
+            Enabled = Callback
+            if Enabled then
+                spawn(function()
+                    while task.wait() do
+                        if not Enabled then return end
+                        game:GetService("Workspace").Gravity = NewGravity["Value"]
+                    end
+                end)
+            else
+                game:GetService("Workspace").Gravity = 196.2
+            end
+        end
+    })
+    NewGravity = Nuker:CreateSlider({
+        ["Name"] = "Distance",
+        ["Function"] = function(v)
+            if Enabled then
+                game:GetService("Workspace").Gravity = v
+            end
+        end,
+        ["Min"] = 0,
+        ["Max"] = 200,
+        ["Default"] = 0,
+        ["Round"] = 10
     })
 end)
