@@ -1,17 +1,9 @@
 repeat task.wait() until game:IsLoaded()
 function betterisfile(path)
-    local suc, res = pcall(function() readfile(path) end)
+    local suc, res = pcall(function() return readfile(path) end)
     return suc and res ~= nil
 end
 shared["betterisfile"] = betterisfile
-spawn(function()
-    local queueteleport = syn and syn.queue_on_teleport or queue_on_teleport or fluxus and fluxus.queue_on_teleport
-    game:GetService("Players").LocalPlayer.OnTeleport:Connect(function(State)
-        if State == Enum.TeleportState.Started then
-            queueteleport([[if betterisfile("CometV2/Loader.lua") then loadstring(readfile("CometV2/Loader.lua"))() else loadstring(game:HttpGet("https://raw.githubusercontent.com/Ham-135/CometV2/main/Loader.lua"))() end]])
-        end
-    end)
-end)
 local placeid = game.PlaceId
 if placeid == 6872274481 or placeid == 8560631822 or placeid == 8444591321 then
     if betterisfile("CometV2/Modules/Bedwars.lua") then
@@ -32,3 +24,12 @@ else
         loadstring(game:HttpGet("https://raw.githubusercontent.com/Ham-135/CometV2/main/Modules/Universal.lua"))()
     end
 end
+
+task.delay(1, function()
+    game:GetService("StarterGui"):SetCore("ChatWindowPosition", UDim2.new(0,0,0.73,0))
+    game:GetService("StarterGui"):SetCore("ChatMakeSystemMessage",{
+        Text = "Comet V2 Loaded!",
+        Color = Color3.fromRGB(255,65,65),
+        Font = Enum.Font.SourceSansBold,
+    })
+end)
