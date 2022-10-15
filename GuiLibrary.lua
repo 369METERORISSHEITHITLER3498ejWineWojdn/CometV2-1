@@ -248,7 +248,6 @@ local function createnotification(title, text, delay2, toggled)
         end)
     end)
 end
-createnotification("Loaded", "Press Right-Shift to toggle GUI", 3, true)
 local function dragGUI(gui, dragpart)
     spawn(function()
         local dragging
