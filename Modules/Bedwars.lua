@@ -1467,8 +1467,8 @@ runcode(function()
             end
         end
     })
-    NewGravity = Nuker:CreateSlider({
-        ["Name"] = "Distance",
+    NewGravity = Gravity:CreateSlider({
+        ["Name"] = "New",
         ["Function"] = function(v)
             if Enabled then
                 game:GetService("Workspace").Gravity = v
