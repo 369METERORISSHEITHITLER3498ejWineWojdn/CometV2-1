@@ -4,12 +4,17 @@ shared["CometConfigs"] = {
     Color = Color3.fromRGB(255,65,65),
     Enabled = false
 }
-local lib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ham-135/CometV2/main/GuiLibrary.lua"))()
+local lib
+if shared["betterisfile"]("CometV2/GuiLibrary.lua") then
+    lib = loadstring(readfile("CometV2/GuiLibrary.lua"))()
+else
+    lib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ham-135/CometV2/main/GuiLibrary.lua"))()
+end
 local getasset = getsynasset or getcustomasset
 local ScreenGuitwo = game:GetService("CoreGui").RektskyNotificationGui
 local lplr = game:GetService("Players").LocalPlayer
 local cam = game:GetService("Workspace").CurrentCamera
-function CreateNotification(title,text,delay2)
+function CreateNotification(title, text, delay2)
     spawn(function()
         if ScreenGuitwo:FindFirstChild("Background") then ScreenGuitwo:FindFirstChild("Background"):Destroy() end
         local frame = Instance.new("Frame")
@@ -200,14 +205,5 @@ runcode(function()
                 end
             end
         end
-    })
-end)
-
-task.delay(0.5, function()
-    CreateNotification("Comet V2","Comet V2 Loaded! Hope you enjoy! discord.gg/fJNbvucPS5",15)
-    game:GetService("StarterGui"):SetCore("ChatMakeSystemMessage",{
-        Text = "Comet V2 Loaded!\nMade by Ham135 and Car (Also on YT)!\ndiscord.gg/fJNbvucPS5",
-        Color = Color3.fromRGB(255,65,65),
-        Font = Enum.Font.SourceSansBold
     })
 end)
