@@ -85,6 +85,7 @@ runcode(function()
         ["Callback"] = function(Callback)
             Enabled = Callback
             if Enabled then
+                settings():GetService("NetworkSettings").IncomingReplicationLag = 99e99
                 char = lplr.Character
                 char.Archivable = true
                 clone = char:Clone()
@@ -95,13 +96,16 @@ runcode(function()
                 clone:FindFirstChild("Animate").Disabled = true
                 clone:FindFirstChild("Animate").Disabled = false
                 clone:FindFirstChild("HumanoidRootPart").Anchored = false
+                settings():GetService("NetworkSettings").IncomingReplicationLag = 0
             else
+                settings():GetService("NetworkSettings").IncomingReplicationLag = 99e99
                 clone:Destroy()
                 char.Parent = game:GetService("Workspace")
                 lplr.Character = char
                 cam.CameraSubject = char:FindFirstChild("Humanoid")
                 char:FindFirstChild("Animate").Disabled = true
                 char:FindFirstChild("Animate").Disabled = false
+                settings():GetService("NetworkSettings").IncomingReplicationLag = 0
             end
         end
     })
