@@ -51,6 +51,8 @@ local bedwars = {
     ["DamageIndicator"] = KnitClient.Controllers.DamageIndicatorController.spawnDamageIndicator,
     ["ClientHandlerStore"] = require(lplr.PlayerScripts.TS.ui.store).ClientStore,
     ["SwordController"] = KnitClient.Controllers.SwordController,
+    ["BlockCPSConstants"] = require(game:GetService("ReplicatedStorage").TS["shared-constants"]).CpsConstants,
+    ["BalloonController"] = KnitClient.Controllers.BalloonController,
 }
 function getQueueType()
     local state = bedwars["ClientHandlerStore"]:getState()
@@ -225,14 +227,21 @@ end)
 
 runcode(function()
     local Value = {["Value"] = 0}
+    local Legit = {["Enabled"] = false}
     local Enabled = false
     local Velocity = Tabs["Combat"]:CreateToggle({
         ["Name"] = "Velocity",
         ["Callback"] = function(Callback)
             Enabled = Callback
             if Enabled then
-                bedwars["KnockbackTable"]["kbDirectionStrength"] = Value["Value"]
-				bedwars["KnockbackTable"]["kbUpwardStrength"] = Value["Value"]
+                if Legit["Enabled"] then
+                    local new = math.round(math.abs(Legit["Value"])) -5
+                    bedwars["KnockbackTable"]["kbDirectionStrength"] = new
+                    bedwars["KnockbackTable"]["kbUpwardStrength"] = new
+                else
+                    bedwars["KnockbackTable"]["kbDirectionStrength"] = math.round(Value["Value"])
+				    bedwars["KnockbackTable"]["kbUpwardStrength"] = math.round(Value["Value"])
+                end
             else
                 bedwars["KnockbackTable"]["kbDirectionStrength"] = 100
 				bedwars["KnockbackTable"]["kbUpwardStrength"] = 100
@@ -246,6 +255,13 @@ runcode(function()
         ["Max"] = 100,
         ["Default"] = 0,
         ["Round"] = 1
+    })
+    Legit = Velocity:CreateOptionTog({
+        ["Name"] = "Legit",
+        ["Default"] = true,
+        ["Func"] = function(v)
+            Legit["Enabled"] = v
+        end
     })
 end)
 
@@ -440,6 +456,12 @@ runcode(function()
 end)
 
 runcode(function()
+    local Connection
+    local Connection2
+    local flydown = false
+    local flyup = false
+    local usedballoon = false
+    local olddeflate
     local velo
     local Enabled = false
     local Mode = {["Value"] = "Moonsoon"}
@@ -449,9 +471,31 @@ runcode(function()
             Enabled = Callback
             if Enabled then
                 spawn(function()
+                    if lplr.Character:FindFirstChild("InventoryFolder").Value:FindFirstChild("balloon") then
+                        usedballoon = true
+                        olddeflate = bedwars["BalloonController"].deflateBalloon
+                        bedwars["BalloonController"].inflateBalloon()
+                        bedwars["BalloonController"].deflateBalloon = function() end
+                    end
                     velo = Instance.new("BodyVelocity")
                     velo.MaxForce = Vector3.new(0,9e9,0)
                     velo.Parent = lplr.Character:FindFirstChild("HumanoidRootPart")
+                    Connection = uis.InputBegan:Connect(function(input)
+                        if input.KeyCode == Enum.KeyCode.Space then
+                            flyup = true
+                        end
+                        if input.KeyCode == Enum.KeyCode.LeftShift then
+                            flydown = true
+                        end
+                    end)
+                    Connection2 = uis.InputEnded:Connect(function(input)
+                        if input.KeyCode == Enum.KeyCode.Space then
+                            flyup = false
+                        end
+                        if input.KeyCode == Enum.KeyCode.LeftShift then
+                            flydown = false
+                        end
+                    end)
                     spawn(function()
                         while task.wait() do
                             if not Enabled then return end
@@ -459,12 +503,12 @@ runcode(function()
                                 for i = 1,7 do
                                     task.wait()
                                     if not Enabled then return end
-                                    velo.Velocity = Vector3.new(0,i*1.25,0)
+                                    velo.Velocity = Vector3.new(0,i*1.25+(flyup and 40 or 0)+(flydown and -40 or 0),0)
                                 end
                                 for i = 1,7 do
                                     task.wait()
                                     if not Enabled then return end
-                                    velo.Velocity = Vector3.new(0,-i*1,0)
+                                    velo.Velocity = Vector3.new(0,-i*1+(flyup and 40 or 0)+(flydown and -40 or 0),0)
                                 end
                             elseif Mode["Value"] == "FunnyOld" then
                                 for i = 1,15 do
@@ -488,34 +532,49 @@ runcode(function()
                                 for i = 1,15 do
                                     task.wait()
                                     if not Enabled then return end
-                                    velo.Velocity = Vector3.new(0,i*1.25,0)
+                                    velo.Velocity = Vector3.new(0,i*1.25+(flyup and 40 or 0)+(flydown and -40 or 0),0)
                                 end
                                 for i = 1,15 do
                                     task.wait()
                                     if not Enabled then return end
-                                    velo.Velocity = Vector3.new(0,-i*1,0)
+                                    velo.Velocity = Vector3.new(0,-i*1+(flyup and 40 or 0)+(flydown and -40 or 0),0)
                                 end
                             elseif Mode["Value"] == "Bounce2" then
                                 for i = 1,15 do
                                     task.wait()
                                     if not Enabled then return end
-                                    velo.Velocity = Vector3.new(0,i*1.25,0)
+                                    velo.Velocity = Vector3.new(0,i*1.25+(flyup and 40 or 0)+(flydown and -40 or 0),0)
                                 end
                                 velo.Velocity = Vector3.new(0,0,0)
                                 task.wait(0.05)
                                 for i = 1,15 do
                                     task.wait()
                                     if not Enabled then return end
-                                    velo.Velocity = Vector3.new(0,-i*1,0)
+                                    velo.Velocity = Vector3.new(0,-i*1+(flyup and 40 or 0)+(flydown and -40 or 0),0)
                                 end
                                 task.wait(0.05)
                                 velo.Velocity = Vector3.new(0,0,0)
+                            else
+                                Mode["Value"] = "Long"
+                                lib["ToggleFuncs"]["Fly"](true)
+                                task.wait(0.1)
+                                lib["ToggleFuncs"]["Fly"](true)
                             end
                         end
                     end)
                 end)
             else
                 velo:Destroy()
+                Connection:Disconnect()
+                Connection2:Disconnect()
+                flyup = false
+                flydown = false
+                if usedballoon == true then
+                    usedballoon = false
+                    bedwars["BalloonController"].deflateBalloon = olddeflate
+                    bedwars["BalloonController"].deflateBalloon()
+                    olddeflate = nil
+                end
             end
         end
     })
@@ -643,6 +702,24 @@ runcode(function()
 end)
 
 runcode(function()
+    function GetBeds()
+        local beds = {}
+        for i,v in pairs(game:GetService("Workspace"):GetChildren()) do
+            if string.lower(v.Name) == "bed" and v:FindFirstChild("Covers") ~= nil and v:FindFirstChild("Covers").BrickColor ~= lplr.Team.TeamColor then
+                table.insert(beds,v)
+            end
+        end
+        return beds
+    end
+    function GetPlayers()
+        local players = {}
+        for i,v in pairs(game:GetService("Players"):GetPlayers()) do
+            if v.Team ~= lplr.Team and IsAlive(v) then
+                table.insert(players,v)
+            end
+        end
+        return players
+    end
     local Enabled = false
     local AutoWin = Tabs["Exploits"]:CreateToggle({
         ["Name"] = "AutoWin",
@@ -650,20 +727,41 @@ runcode(function()
             Enabled = Callback
             if Enabled then
                 spawn(function()
-                    game:GetService("Workspace").Gravity = 0
-				    for i,v in pairs(game:GetService("Players"):GetChildren()) do
-					    if v.Team ~= lplr.Team and IsAlive(v) then
-						    repeat
-							    task.wait(0.1)
-							    pcall(function()
-								    lplr.Character:FindFirstChild("HumanoidRootPart").CFrame = v.Character:FindFirstChild("HumanoidRootPart").CFrame
-							    end)
-						    until not IsAlive(v) or not Enabled
-					    end
-				    end
+                    if GetMatchState() ~= 1 then
+                        repeat task.wait() until GetMatchState() == 1 or not Enabled
+                        if not Enabled then return end
+                    end
+                    local start = tick()
+                    local beds = GetBeds()
+                    for i,v in pairs(beds) do
+                        repeat
+                            task.wait(0.01)
+                            if lplr:GetAttribute("DenyBlockBreak") == true then
+                                lplr:SetAttribute("DenyBlockBreak",nil)
+                            end
+                            lplr.Character:FindFirstChild("HumanoidRootPart").CFrame = v.CFrame + Vector3.new(0,3,0)
+                            local x = math.round(v.Position.X/3)
+                            local y = math.round(v.Position.Y/3)
+                            local z = math.round(v.Position.Z/3)
+                            game:GetService("ReplicatedStorage").rbxts_include.node_modules:FindFirstChild("@rbxts").net.out._NetManaged.DamageBlock:InvokeServer({
+                                ["blockRef"] = {
+                                    ["blockPosition"] = Vector3.new(x,y,z)
+                                },
+                                ["hitPosition"] = Vector3.new(x,y,z),
+                                ["hitNormal"] = Vector3.new(x,y,z)
+                            })
+                        until not v:FindFirstChild("Covers") or not v or not Enabled
+                        if not Enabled then return end
+                    end
+                    local players = GetPlayers()
+                    for i,v in pairs(players) do
+                        repeat
+                            task.wait(0.01)
+                            lplr.Character:FindFirstChild("HumanoidRootPart").CFrame = v.Character:FindFirstChild("HumanoidRootPart").CFrame + Vector3.new(0,3,0)
+                        until not IsAlive(v)
+                    end
+                    CreateNotification("AutoWin","Took "..math.abs(start - tick()).." Seconds/Ticks to win Game",5)
                 end)
-            else
-                game:GetService("Workspace").Gravity = 192.6
             end
         end
     })
@@ -821,10 +919,10 @@ runcode(function()
             {CFrame = CFrame.new(0, 0, 0) * CFrame.Angles(math.rad(0), math.rad(0), math.rad(0)), Time = 0.3}
         },
         ["VerticalSpin"] = {
-			{CFrame = CFrame.new(0, 0, 0) * CFrame.Angles(math.rad(-90), math.rad(8), math.rad(5)), Time = 0.3},
-			{CFrame = CFrame.new(0, 0, 0) * CFrame.Angles(math.rad(180), math.rad(3), math.rad(13)), Time = 0.3},
-			{CFrame = CFrame.new(0, 0, 0) * CFrame.Angles(math.rad(90), math.rad(-5), math.rad(8)), Time = 0.3},
-			{CFrame = CFrame.new(0, 0, 0) * CFrame.Angles(math.rad(0), math.rad(0), math.rad(0)), Time = 0.3}
+			{CFrame = CFrame.new(0, 0, 0) * CFrame.Angles(math.rad(-90), math.rad(8), math.rad(5)), Time = 0.25},
+			{CFrame = CFrame.new(0, 0, 0) * CFrame.Angles(math.rad(180), math.rad(3), math.rad(13)), Time = 0.25},
+			{CFrame = CFrame.new(0, 0, 0) * CFrame.Angles(math.rad(90), math.rad(-5), math.rad(8)), Time = 0.25},
+			{CFrame = CFrame.new(0, 0, 0) * CFrame.Angles(math.rad(0), math.rad(0), math.rad(0)), Time = 0.25}
 		}
     }
     local VMAnim = false
@@ -869,7 +967,6 @@ runcode(function()
                                     if sword ~= nil then
                                         bedwars["SwordController"].lastAttack = game:GetService("Workspace"):GetServerTimeNow() - 0.11
                                         HitRemote:SendToServer({
-                                            --["bye"] = "lex",
                                             ["weapon"] = sword.tool,
                                             ["entityInstance"] = v.Character,
                                             ["validate"] = {
@@ -975,7 +1072,6 @@ runcode(function()
                 Connection = cam.Viewmodel.ChildAdded:Connect(function(v)
                     if v:FindFirstChild("Handle") then
                         pcall(function()
-                            v:FindFirstChild("Handle").Size = v:FindFirstChild("Handle").Size / 1.5
                             v:FindFirstChild("Handle").Material = Enum.Material.Neon
                             v:FindFirstChild("Handle").TextureID = ""
                             v:FindFirstChild("Handle").Color = Color3.fromRGB(255,65,65)
@@ -992,6 +1088,37 @@ runcode(function()
                 Connection:Disconnect()
             end
         end
+    })
+end)
+
+runcode(function()
+    local Connection
+    local Enabled = false
+    local Smaller = {["Value"] = 3}
+    local SmallItems = Tabs["Render"]:CreateToggle({
+        ["Name"] = "SmallItems",
+        ["Callback"] = function(Callback)
+            Enabled = Callback
+            if Enabled then
+                Connection = cam.Viewmodel.ChildAdded:Connect(function(v)
+                    if v:FindFirstChild("Handle") then
+                        pcall(function()
+                            v:FindFirstChild("Handle").Size = v:FindFirstChild("Handle").Size / tostring(Smaller["Value"])
+                        end)
+                    end
+                end)
+            else
+                Connection:Disconnect()
+            end
+        end
+    })
+    Smaller = SmallItems:CreateSlider({
+        ["Name"] = "Value",
+        ["Function"] = function() end,
+        ["Min"] = 0,
+        ["Max"] = 10,
+        ["Default"] = 3,
+        ["Round"] = 1
     })
 end)
 
@@ -1089,8 +1216,13 @@ runcode(function()
             Enabled = Callback
             if Enabled then
                 spawn(function()
-                    while task.wait(0.25) do
+                    while task.wait(0.3) do
                         if not Enabled then return end
+                        spawn(function()
+                            if lplr:GetAttribute("DenyBlockBreak") == true then
+                                lplr:SetAttribute("DenyBlockBreak",nil)
+                            end
+                        end)
                         if IsAlive(lplr) then
                             local beds = GetBeds()
                             for i,v in pairs(beds) do
@@ -1112,45 +1244,6 @@ runcode(function()
         ["Max"] = 30,
         ["Default"] = 30,
         ["Round"] = 10
-    })
-end)
-
-runcode(function()
-    local velo
-    local Enabled = false
-    local LongJump = Tabs["Blatant"]:CreateToggle({
-        ["Name"] = "LongJump",
-        ["Callback"] = function(Callback)
-            Enabled = Callback
-            if Enabled then
-                spawn(function()
-                    while task.wait(0.2) do
-                        if not Enabled then return end
-                        bedwars["DamageController"].requestSelfDamage(nil,1,bedwars["DamageTypes"].TNT)
-                    end
-                end)
-                velo = Instance.new("BodyVelocity")
-                velo.MaxForce = Vector3.new(9e9,9e9,9e9)
-                velo.Parent = lplr.Character:FindFirstChild("HumanoidRootPart")
-                local MultiplierPower = 0
-                spawn(function()
-                    for i = 1,10 do
-                        task.wait(0.01)
-                        MultiplierPower = i * 10 + 20
-                    end
-                end)
-                spawn(function()
-                    repeat
-                        task.wait()
-                        velo.Velocity = lplr.Character:FindFirstChild("HumanoidRootPart").CFrame.LookVector * MultiplierPower + Vector3.new(0,5,0)
-                    until not Enabled
-                    CreateNotification("LongJump","Finished",5)
-                end)
-            else
-                velo.Velocity = Vector3.zero
-                velo:Destroy()
-            end
-        end
     })
 end)
 
@@ -1311,6 +1404,7 @@ runcode(function()
         label.TextColor3 = Color3.fromRGB(65,65,255)
         label.Parent = ui
     end)
+    local old
     local Enabled = false
     local ShowAmount = {["Enabled"] = false}
     local Scaffold = Tabs["Utility"]:CreateToggle({
@@ -1320,6 +1414,8 @@ runcode(function()
             if Enabled then
                 ui.Enabled = true
                 spawn(function()
+                    old = bedwars["BlockCPSConstants"].BLOCK_PLACE_CPS
+                    bedwars["BlockCPSConstants"].BLOCK_PLACE_CPS = 9999
                     while task.wait() do
                         if not Enabled then return end
                         if IsAlive(lplr) then
@@ -1337,6 +1433,7 @@ runcode(function()
                 end)
             else
                 ui.Enabled = false
+                bedwars["BlockCPSConstants"].BLOCK_PLACE_CPS = old
             end
         end
     })
@@ -1429,24 +1526,6 @@ end)
 
 runcode(function()
     local Enabled = false
-    local Range = {["Value"] = 100}
-    local VomitEffect = Tabs["Render"]:CreateToggle({
-        ["Name"] = "VomitEffect",
-        ["Callback"] = function(Callback)
-            Enabled = Callback
-            if Enabled then
-                lib["ToggleFuncs"]["VomitEffect"](true)
-                Client:Get("gwcMycNueYtlz"):SendToServer({
-                    player = lplr,
-                    targetPoint = (lplr.Character:FindFirstChild("HumanoidRootPart").CFrame + lplr.Character:FindFirstChild("HumanoidRootPart").CFrame.LookVector).Position
-                })
-            end
-        end
-    })
-end)
-
-runcode(function()
-    local Enabled = false
     local NewGravity = {["Value"] = 0}
     local Gravity = Tabs["Blatant"]:CreateToggle({
         ["Name"] = "Gravity",
@@ -1466,14 +1545,144 @@ runcode(function()
     })
     NewGravity = Gravity:CreateSlider({
         ["Name"] = "New",
-        ["Function"] = function(v)
-            if Enabled then
-                game:GetService("Workspace").Gravity = v
-            end
-        end,
+        ["Function"] = function() end,
         ["Min"] = 0,
         ["Max"] = 200,
         ["Default"] = 0,
-        ["Round"] = 10
+        ["Round"] = 1
+    })
+end)
+
+runcode(function()
+    function HasTNT()
+        if IsAlive(lplr) and lplr.Character:FindFirstChild("InventoryFolder").Value:FindFirstChild("tnt") then
+            return true
+        end
+        return false
+    end
+    function getpos()
+        local x = math.round(lplr.Character.PrimaryPart.Position.X/3)
+        local y = math.round(lplr.Character.PrimaryPart.Position.Y/3)
+        local z = math.round(lplr.Character.PrimaryPart.Position.Z/3)
+        return Vector3.new(x,y,z)
+    end
+    local velo
+    local Enabled = false
+    local TNTFly = Tabs["Blatant"]:CreateToggle({
+        ["Name"] = "TNTFly",
+        ["Callback"] = function(Callback)
+            Enabled = Callback
+            if Enabled then
+                velo = Instance.new("BodyVelocity")
+                velo.MaxForce = Vector3.new(9e9,9e9,9e9)
+                velo.Velocity = Vector3.new(0,0.5,0)
+                velo.Parent = lplr.Character:FindFirstChild("HumanoidRootPart")
+                if not HasTNT() then
+                    lib["ToggleFuncs"]["TNTFly"](true)
+                    task.delay(0.1, function() CreateNotification("TNTFly","You need to be Alive and have TNT to use this",5) end)
+                end
+                game:GetService("ReplicatedStorage").rbxts_include.node_modules:FindFirstChild("@rbxts").net.out._NetManaged.PlaceBlock:InvokeServer({
+                    ["position"] = getpos(),
+                    ["blockType"] = "tnt"
+                })
+                task.wait(3)
+                velo.Velocity = lplr.Character:FindFirstChild("HumanoidRootPart").CFrame.LookVector * 64
+            else
+                velo:Destroy()
+            end
+        end
+    })
+end)
+
+runcode(function()
+    local connections = {}
+    local objects = {}
+    local newcon
+    local Enabled = false
+    local FillTransparency = {["Value"] = 0.5}
+    local OutlineTransparency = {["Value"] = 1}
+    function BrickToNew(bname)
+        local p = Instance.new("Part")
+        p.BrickColor = bname
+        local new = p.Color
+        p:Destroy()
+        return new
+    end
+    function ESPModel(model,plr)
+        for i,v in pairs(model:GetChildren()) do
+            if string.lower(v.ClassName):find("part") then
+                local hl = Instance.new("Highlight")
+                hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                hl.Enabled = true
+                hl.FillColor = BrickToNew(plr.TeamColor)
+                hl.FillTransparency = 0.5
+                hl.OutlineColor = Color3.fromRGB(255,255,255)
+                hl.OutlineTransparency = 0.5
+                hl.Parent = v
+                table.insert(objects,hl)
+                spawn(function()
+                    repeat
+                        task.wait(0.1)
+                        hl.FillTransparency = FillTransparency["Value"]
+                        hl.OutlineTransparency = OutlineTransparency["Value"]
+                    until not hl or not v or not model
+                end)
+            end
+        end
+    end
+    local Chams = Tabs["Render"]:CreateToggle({
+        ["Name"] = "Chams",
+        ["Callback"] = function(Callback)
+            Enabled = Callback
+            if Enabled then
+                for i,v in pairs(game:GetService("Players"):GetChildren()) do
+                    if v.Name ~= lplr.Name then
+                        if IsAlive(v) then
+                            ESPModel(v.Character,v)
+                        end
+                        connections[#connections+1] = v.CharacterAdded:Connect(function(c)
+                            task.wait(1.5)
+                            ESPModel(c,v)
+                        end)
+                    end
+                end
+                newcon = game:GetService("Players").PlayerAdded:Connect(function(v)
+                    connections[#connections+1] = v.CharacterAdded:Connect(function(c)
+                        task.wait(1.5)
+                        ESPModel(c,v)
+                    end)
+                end)
+            else
+                for i,v in pairs(connections) do
+                    v:Disconnect()
+                    connections[v] = nil
+                end
+                for i,v in pairs(objects) do
+                    v:Destroy()
+                    objects[v] = nil
+                end
+                newcon:Disconnect()
+                connections = nil
+                objects = nil
+                connections = {}
+                objects = {}
+            end
+        end
+    })
+    FillTransparency = Chams:CreateSlider({
+        ["Name"] = "FillTransparency",
+        ["Function"] = function() end,
+        ["Min"] = 0,
+        ["Max"] = 1,
+        ["Default"] = 0.5,
+        ["Round"] = 1
+    })
+    OutlineTransparency = Chams:CreateSlider({
+        ["Name"] = "OutlineTransparency",
+        ["Function"] = function() end,
+        ["Min"] = 0,
+        ["Max"] = 1,
+        ["Default"] = 0.5,
+        ["Round"] = 1
     })
 end)
